@@ -45,6 +45,15 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
 
+      - name: Show which key and user are used (public info only)
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "key fingerprint (expect SHA256:EnwjiJ+17E1Yxmh88C1+BgDBrnduFZ4DlFFfHyt08Zc):"
+          ssh-keygen -y -f ~/.ssh/deploy_key | ssh-keygen -lf - || echo "deploy key is not a valid private key"
+          echo "user length: ${#VPS_USER} (expect 8 for 'trisatya')"
+          echo "known_hosts lines: $(grep -c . ~/.ssh/known_hosts)"
+
       - name: Deploy (health check + auto rollback on the VPS)
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
