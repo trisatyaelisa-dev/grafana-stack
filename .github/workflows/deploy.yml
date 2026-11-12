@@ -59,5 +59,8 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
+          # strip stray spaces/newlines picked up when pasting secrets
+          VPS_USER="$(printf '%s' "$VPS_USER" | tr -d '[:space:]')"
+          VPS_HOST="$(printf '%s' "$VPS_HOST" | tr -d '[:space:]')"
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" "$GITHUB_SHA"
