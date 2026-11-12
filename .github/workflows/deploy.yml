@@ -21,11 +21,10 @@ jobs:
           docker compose config -q
 
       - name: Validate Nginx config
-        run: |
-          docker run --rm -v "$PWD/nginx:/etc/nginx/conf.d:ro" nginx:1.27-alpine nginx -t
+        run: scripts/nginx-test.sh
 
-      - name: Lint deploy script
-        run: shellcheck scripts/deploy.sh
+      - name: Lint scripts
+        run: shellcheck scripts/*.sh
 
   deploy:
     needs: check
