@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # Keycloak management interface (port 9000, /metrics), reached over the
+  # shared "observability" docker network. Labels follow the bare-metal
+  # example in https://www.keycloak.org/observability/grafana-dashboards so
+  # the official dashboards work.
+  - job_name: keycloak-service
+    static_configs:
+      - targets: ["keycloak:9000"]
+        labels:
+          namespace: keycloak
+          container: keycloak
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: pod
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

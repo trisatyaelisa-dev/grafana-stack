@@ -34,6 +34,52 @@ services:
       GF_AUTH_SIGNOUT_REDIRECT_URL: https://auth.trisatya.dev/realms/trisatya/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2Fgrafana.trisatya.dev%2Flogin
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards/keycloak:ro
+
+  # Metrics. Joins "observability" to scrape keycloak:9000 in keycloak-stack.
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks: [default, observability]
+    mem_limit: 512m
+
+  # Logs store.
+  loki:
+    image: grafana/loki:3.7.9
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+    mem_limit: 512m
+
+  # Log shipper: reads container logs from the Docker socket (read-only).
+  alloy:
+    image: grafana/alloy:v1.21.3
+    restart: unless-stopped
+    command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy/data
+    mem_limit: 256m
+
+networks:
+  # Shared with keycloak-stack; created once with `docker network create observability`.
+  observability:
+    external: true
 
 volumes:
   grafana-data:
+  prometheus-data:
+  loki-data:
+  alloy-data:
