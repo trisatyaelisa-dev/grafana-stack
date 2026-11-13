@@ -7,6 +7,12 @@
 # The grafana image has no sqlite3, so the file is copied out with
 # `docker cp` and the copy is checked with PRAGMA integrity_check; a copy
 # taken mid-write fails the check and is retried.
+#
+# Restore (replaces the current Grafana database):
+#   tar -xzf ~/backups/grafana/grafana-<timestamp>.tar.gz -C /tmp grafana.db
+#   cd ~/grafana-stack && docker compose stop grafana
+#   docker cp /tmp/grafana.db "$(docker compose ps -aq grafana)":/var/lib/grafana/grafana.db
+#   docker compose start grafana && rm /tmp/grafana.db
 
 set -euo pipefail
 
